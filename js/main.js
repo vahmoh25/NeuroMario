@@ -142,7 +142,7 @@ function drawEvolve() {
       sub: `best ${fmt(s.best)} · avg ${fmt(s.avg)} · ${(s.bestX * 100).toFixed(0)}% of the level · ${s.wins} finished`,
       sub2: `top ${Math.max(2, Math.round(evo.size * 0.08))} survive unchanged · the rest are bred (crossover + mutation) → generation ${s.gen + 1}`,
     };
-  } else if (!S.running) banner = { title: '⏸ Paused', sub: 'Press Start to keep evolving', color: '#cdd7ff' };
+  } else if (!S.running && !S.quiet) banner = { title: '⏸ Paused', sub: 'Press Start to keep evolving', color: '#cdd7ff' };
 
   renderer.draw({
     watched: g, agents, showGhosts: S.showGhosts, showVision: S.showVision, obs: evo.acts[S.watch][0],
@@ -296,4 +296,26 @@ addEventListener('blur', () => { keys.left = keys.right = keys.jump = keys.run =
 
 /* ---------------- go ---------------- */
 newEvolution();
+
+// Optional URL parameters (used to capture README screenshots, handy for demos):
+//   ?level=1  ?seed=5  ?warmup=30 (pre-evolve N generations)  ?frames=240 (run N frames into the next one)
+//   ?mode=play  ?only=game|brain|stats (show a single panel)  ?pause=1
+(function applyUrlParams() {
+  const q = new URLSearchParams(location.search);
+  if (q.has('level')) { S.level = +q.get('level'); $('selLevel').value = S.level; }
+  if (q.has('level') || q.has('seed')) {
+    S.evo = new Evolution(LEVELS[S.level], { size: S.popSize, mutation: S.mutation, seed: q.has('seed') ? +q.get('seed') : undefined });
+  }
+  const warm = +q.get('warmup') || 0;
+  S.speed = 0;
+  for (let guard = 0; S.evo.generation < warm && guard < 5e6; guard++) { S.cooldown = 0; advanceEvolution(); }
+  S.cooldown = 0; S.speed = 1;
+  for (let i = 0; i < (+q.get('frames') || 0); i++) advanceEvolution();
+  S.celebrate = 0; updateStats();
+  if (q.get('pause')) { setRunning(false); S.quiet = true; }
+  if (q.get('mode') === 'play') setMode('play');
+  if (q.get('only')) document.body.classList.add('only', 'only-' + q.get('only'));
+  if (q.has('level') || warm) { viz.initialised = false; viz.autoRotate = false; $('chkRotate').checked = false; }
+})();
+
 requestAnimationFrame(loop);

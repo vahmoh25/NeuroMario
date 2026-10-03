@@ -83,3 +83,11 @@ input[type=checkbox] { accent-color: var(--accent); }
   .cards { grid-template-columns: repeat(2, 1fr); }
   .vizwrap { min-height: 420px; }
 }
+
+/* single-panel views (?only=game|brain|stats) — used for README screenshots */
+body.only .top, body.only .toolbar { display: none; }
+body.only .grid { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+body.only .panel { display: none; }
+body.only-game .game, body.only-brain .viz, body.only-stats .stats, body.only-stats .how { display: block; }
+body.only-brain .vizwrap { min-height: 560px; }
+body.only-stats .grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
