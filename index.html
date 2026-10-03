@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroMario — Neuroevolution Lab</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo">N</div>
+    <div>
+      <h1>NeuroMario <span>neuroevolution lab</span></h1>
+      <p>Watch a population of tiny brains learn to play a platformer — no training data, just survival of the fittest.</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" id="tabEvolve" role="tab">🧬 AI Evolution</button>
+    <button class="tab" id="tabPlay" role="tab">🎮 Play &amp; race the AI</button>
+  </div>
+</header>
+
+<section class="toolbar">
+  <div class="group">
+    <button id="btnRun" class="btn primary">⏸ Pause</button>
+    <button id="btnStep" class="btn" title="Fast-forward to the end of this generation">⏭ Next gen</button>
+    <button id="btnReset" class="btn" title="Throw away the population and start over">↺ Reset</button>
+  </div>
+  <div class="group">
+    <span class="lbl">Speed</span>
+    <div class="seg" id="speedSeg">
+      <button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="5">5×</button><button data-s="20">20×</button><button data-s="0">MAX</button>
+    </div>
+  </div>
+  <div class="group">
+    <span class="lbl">Level</span>
+    <select id="selLevel" class="sel"></select>
+  </div>
+  <div class="group">
+    <span class="lbl">Population</span>
+    <select id="selPop" class="sel"><option>30</option><option selected>60</option><option>100</option><option>150</option></select>
+  </div>
+  <div class="group">
+    <span class="lbl">Mutation</span>
+    <input type="range" id="rngMut" min="1" max="30" value="8"><span id="valMut" class="val">8%</span>
+  </div>
+  <div class="group checks">
+    <label><input type="checkbox" id="chkGhost" checked> Population ghosts</label>
+    <label><input type="checkbox" id="chkVision" checked> Show AI vision</label>
+  </div>
+</section>
+
+<main class="grid">
+  <section class="panel game">
+    <div class="ptitle"><b>THE GAME</b><span id="watchInfo">watching the leader</span>
+      <button id="btnFollow" class="mini hidden">⤴ follow leader</button></div>
+    <div class="stage">
+      <canvas id="gameCanvas"></canvas>
+      <div class="pills">
+        <div class="pill"><i>GEN</i><b id="pGen">1</b></div>
+        <div class="pill"><i>ALIVE</i><b id="pAlive">0</b></div>
+        <div class="pill"><i>BEST</i><b id="pBest">0</b></div>
+        <div class="pill"><i>TIME</i><b id="pTime">0s</b></div>
+      </div>
+      <div class="hint" id="playHint" style="">← → / A D move · ↑ / W / Space jump (hold = higher) · Shift / Z run · R restart</div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#ffc440"></i>vision: solid ground</span>
+      <span><i style="background:#409cff"></i>vision: enemy / spike</span>
+      <span><i style="background:hsl(40,85%,60%);opacity:.5"></i>translucent runners = rest of the population</span>
+    </div>
+  </section>
+
+  <section class="panel viz">
+    <div class="ptitle"><b>THE BRAIN</b><span id="netInfo">3D network · drag to orbit, scroll to zoom</span></div>
+    <div class="vizwrap"><canvas id="netCanvas"></canvas></div>
+    <div class="vizbar">
+      <label><input type="checkbox" id="chkRotate" checked> auto-orbit</label>
+      <label>weight cutoff <input type="range" id="rngCut" min="0" max="100" value="12"></label>
+      <span id="netStats" class="val"></span>
+    </div>
+  </section>
+
+  <section class="panel stats">
+    <div class="ptitle"><b>THE EVOLUTION</b><span>fitness = distance + coins + stomps (+ big bonus for finishing)</span></div>
+    <div class="cards">
+      <div class="card"><i>Generation</i><b id="sGen">1</b></div>
+      <div class="card"><i>Alive now</i><b id="sAlive">–</b></div>
+      <div class="card"><i>Best this gen</i><b id="sGenBest">–</b></div>
+      <div class="card"><i>Best ever</i><b id="sEver">–</b></div>
+      <div class="card"><i>Avg fitness (last)</i><b id="sAvg">–</b></div>
+      <div class="card"><i>Finishers (last)</i><b id="sWins">–</b></div>
+      <div class="card"><i>Effective mutation</i><b id="sMut">–</b></div>
+      <div class="card"><i>Stagnant gens</i><b id="sStag">0</b></div>
+    </div>
+    <canvas id="chart"></canvas>
+    <div class="ptitle small"><b>POPULATION</b><span>each bar = one agent's progress · click one to watch its brain · ▲ elite, ● fresh blood</span></div>
+    <canvas id="strip"></canvas>
+  </section>
+
+  <section class="panel how">
+    <div class="ptitle"><b>HOW IT ALL CONNECTS</b></div>
+    <ol class="steps" id="steps">
+      <li data-st="play"><b>1 · Play</b><span>Every agent runs the level at once. Each frame the game turns the 8×5 tiles around Mario (plus 3 body readings) into <em>43 numbers</em>.</span></li>
+      <li data-st="think"><b>2 · Think</b><span>Those numbers flow through the 3D network on the right. The 4 output neurons are the gamepad buttons: ◀ ▶ JUMP RUN.</span></li>
+      <li data-st="score"><b>3 · Score</b><span>When everyone is dead or finished, each brain gets a fitness: how far it got, coins grabbed, enemies stomped.</span></li>
+      <li data-st="breed"><b>4 · Breed</b><span>The best brains survive untouched; the rest of the next generation is bred from top performers with <em>crossover + mutation</em> — weights nudge, and connections switch on or off.</span></li>
+    </ol>
+    <p class="note">Nothing tells the network <i>how</i> to play. Mutations that happen to help get copied; the rest die out. Watch the white flashes in the 3D view — those are connections that just mutated.</p>
+  </section>
+</main>
+
+<script src="js/core.js"></script>
+<script src="js/game.js"></script>
+<script src="js/evolution.js"></script>
+<script src="js/render.js"></script>
+<script src="js/viz3d.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

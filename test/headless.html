@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>headless evolution test</title>
+<pre id="out">running…</pre>
+<script src="../js/core.js"></script>
+<script src="../js/game.js"></script>
+<script src="../js/evolution.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const lvl = +(q.get('level') || 0), gens = +(q.get('gens') || 40), seed = +(q.get('seed') || 1);
+const out = document.getElementById('out');
+const evo = new Evolution(LEVELS[lvl], { size: 60, seed });
+const t0 = performance.now();
+let lines = [`level ${LEVELS[lvl].name} width ${LEVELS[lvl].w}`];
+let g = 0;
+function run() {
+  const tEnd = performance.now() + 100;
+  while (performance.now() < tEnd && g < gens) {
+    evo.tick();
+    if (evo.finished) {
+      const h = evo.history[evo.history.length - 1];
+      const causes = {}; evo.games.forEach(x => causes[x.p.cause] = (causes[x.p.cause] || 0) + 1);
+      lines.push(`gen ${h.gen} best ${h.best.toFixed(0)} avg ${h.avg.toFixed(0)} prog ${(h.bestX * 100).toFixed(0)}% wins ${h.wins} ${JSON.stringify(causes)}`);
+      evo.nextGeneration(); g++;
+    }
+  }
+  out.textContent = lines.join('\n') + `\n${g >= gens ? 'DONE' : 'running…'} ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+  if (g < gens) setTimeout(run, 0);
+}
+run();
+</script>
